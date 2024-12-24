@@ -16,9 +16,6 @@ x-common-django:
     - backup-restore:/backup_restore
     - data:/data
     - tmp:/tmp
-  depends_on:
-    db:
-      condition: service_healthy
 
 services:
 
@@ -26,12 +23,6 @@ services:
   django:
     << : *default-common-django
     container_name: django4${COMPOSE_PROJECT_NAME}
-    healthcheck:
-      test: "curl -m 10 --fail --silent --write-out 'HTTP CODE : %{http_code}\n' --output /dev/null http://django:8000/"
-      start_period: 60s
-      interval: 60s
-      timeout: 10s
-      retries: 2
     environment:
       - IS_CELERY=False
     entrypoint: ["/usr/src/geonode/entrypoint.sh"]
@@ -41,9 +32,6 @@ services:
   celery:
     << : *default-common-django
     container_name: celery4${COMPOSE_PROJECT_NAME}
-    depends_on:
-      django:
-        condition: service_healthy
     environment:
       - IS_CELERY=True
     entrypoint: ["/usr/src/geonode/entrypoint.sh"]
@@ -55,12 +43,6 @@ services:
     container_name: memcached4${COMPOSE_PROJECT_NAME}
     command: memcached ${MEMCACHED_OPTIONS}
     restart: on-failure
-    healthcheck:
-      test: nc -z 127.0.0.1 11211
-      interval: 30s
-      timeout: 30s
-      retries: 5
-      start_period: 30s
 
   # Nginx is serving django static and media files and proxies to django and geonode
   geonode:
@@ -110,11 +92,6 @@ services:
       - data:/data
       - tmp:/tmp
     restart: unless-stopped
-    depends_on:
-      data-dir-conf:
-        condition: service_healthy
-      django:
-        condition: service_healthy
 
   data-dir-conf:
     image: geonode/geoserver_data:2.24.3-latest
@@ -123,8 +100,6 @@ services:
     volumes:
       - geoserver-data-dir:/geoserver_data/data
     restart: unless-stopped
-    healthcheck:
-      test: "ls -A '/geoserver_data/data' | wc -l"
 
   # PostGIS database.
   db:
@@ -140,12 +115,6 @@ services:
       - dbdata:/var/lib/postgresql/data
       - dbbackups:/pg_backups
     restart: unless-stopped
-    healthcheck:
-      test: "pg_isready -d postgres -U postgres"
-      start_period: 60s
-      interval: 60s
-      timeout: 10s
-      retries: 2
     # uncomment to enable remote connections to postgres
     #ports:
     #  - "5432:5432"
