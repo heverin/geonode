@@ -17,7 +17,7 @@ x-common-django:
     - data:/data
     - tmp:/tmp
   depends_on:
-    db:
+    db4geonode-postgis:
       condition: service_healthy
 
 services:
