@@ -135,6 +135,11 @@ services:
       - rabbitmq:/var/lib/rabbitmq
     restart: unless-stopped
 
+networks:
+  network1:
+    name: geonode-postgis_default
+    external: true
+
 volumes:
   statics:
     name: ${COMPOSE_PROJECT_NAME}-statics
